@@ -85,10 +85,9 @@ func init() {
 }
 
 func loadConfig(configFile string) (*Config, error) {
-	data, err := ioutil.ReadFile(configFile)
-	if err != nil {
-		return nil, err
-	}
+
+	data := []byte(configFile)
+
 	glog.Infof("New configuration: sha256sum %x", sha256.Sum256(data))
 
 	var cfg Config
@@ -207,11 +206,28 @@ func createPatch(pod *corev1.Pod, initContainerConfig *Config, annotations map[s
 	return json.Marshal(patch)
 }
 
-func replaceInitContainerStrings(permission int64, mountPath, mountName string) string {
-	container := strings.Replace(initContainerTemplate, "replace-permission", strconv.FormatInt(permission, 10), -1)
-	container = strings.Replace(container, "replace-mountPath", mountPath, -1)
-	container = strings.Replace(container, "replace-mountName", mountName, -1)
-	return container
+func replaceInitContainerStrings(pod corev1.Pod) string {
+	if len(pod.Spec.Containers) > 0 {
+		var container string
+		var permission int64
+		var mountPath, mountName string
+		if pod.Spec.SecurityContext != nil && *pod.Spec.SecurityContext.FSGroup > 0 {
+			permission = *pod.Spec.SecurityContext.FSGroup
+			container = strings.Replace(initContainerTemplate, "replace-permission", strconv.FormatInt(permission, 10), -1)
+		}
+		if len(pod.Spec.Containers[0].VolumeMounts) > 0 {
+			mountPath = pod.Spec.Containers[0].VolumeMounts[0].MountPath
+			container = strings.Replace(container, "replace-mountPath", mountPath, -1)
+			mountName = pod.Spec.Containers[0].VolumeMounts[0].Name
+			container = strings.Replace(container, "replace-mountName", mountName, -1)
+		}
+		if container == "" || strings.Contains(container, "replace-") {
+			return ""
+		}
+		return container
+	}
+
+	return ""
 }
 
 // main mutation process
@@ -238,7 +254,13 @@ func (svr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admission
 		}
 	}
 
-	initContainer := replaceInitContainerStrings(*pod.Spec.SecurityContext.FSGroup, pod.Spec.Containers[0].VolumeMounts[0].MountPath, pod.Spec.Containers[0].VolumeMounts[0].Name)
+	initContainer := replaceInitContainerStrings(pod)
+	if initContainer == "" {
+		glog.Infof("Skipping mutation for %s/%s due to pod not containing a securityContext or volumes", pod.Namespace, pod.Name)
+		return &v1beta1.AdmissionResponse{
+			Allowed: true,
+		}
+	}
 
 	err := svr.createUpdateConfigMap(context.TODO(), fmt.Sprintf("%s-configmap", pod.Name), req.Namespace, initContainer)
 	if err != nil {
@@ -322,7 +344,7 @@ func (svr *WebhookServer) serve(w http.ResponseWriter, r *http.Request) {
 		glog.Errorf("Can't encode response: %v", err)
 		http.Error(w, fmt.Sprintf("could not encode response: %v", err), http.StatusInternalServerError)
 	}
-	glog.Infof("Ready to write reponse ...")
+	glog.Infof("Ready to write admissionreview reponse ...")
 	if _, err := w.Write(resp); err != nil {
 		glog.Errorf("Can't write response: %v", err)
 		http.Error(w, fmt.Sprintf("could not write response: %v", err), http.StatusInternalServerError)

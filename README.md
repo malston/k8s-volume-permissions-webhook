@@ -71,9 +71,9 @@ cat deploy/mutatingwebhook.yaml | \
 4. Deploy resources
 
 ```shell
-kubectl create -f deploy/deployment.yaml
-kubectl create -f deploy/service.yaml
-kubectl create -f deploy/mutatingwebhook-ca-bundle.yaml
+kubectl apply -f deploy/deployment.yaml
+kubectl apply -f deploy/service.yaml
+kubectl apply -f deploy/mutatingwebhook-ca-bundle.yaml
 ```
 
 ## Verify
@@ -108,7 +108,7 @@ volume-permissions-container-injector     Active   17m
 3. Deploy an app in Kubernetes cluster, take `alpine` app as an example
 
 ```shell
-kubectl run alpine --image=alpine --restart=Never -n injection --overrides='{"apiVersion":"v1","metadata":{"annotations":{"volume-permissions-container-injector-webhook.malston.me/inject":"yes"}}}' --command -- sleep infinity
+kubectl apply -f examples/kotsadm-minio-sts.yaml -n injection --overrides='{"apiVersion":"v1","metadata":{"annotations":{"volume-permissions-container-injector-webhook.malston.me/inject":"yes"}}}'
 ```
 
 4. Verify sidecar container is injected
@@ -120,8 +120,8 @@ alpine                   2/2       Running       0          1m
 ```
 
 ```shell
-kubectl -n injection get pod alpine -o jsonpath="{.spec.containers[*].name}"
-alpine sidecar-nginx
+kubectl -n injection get pod alpine -o jsonpath="{.spec.initContainers[*].name}"
+alpine volume-permissions
 ```
 
 ## Troubleshooting

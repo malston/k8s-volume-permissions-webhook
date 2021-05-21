@@ -5,7 +5,6 @@ metadata:
     kots.io/backup: velero
     kots.io/kotsadm: "true"
   name: kotsadm-minio
-  namespace: sentry-pro
 spec:
   replicas: 1
   selector:
@@ -35,9 +34,6 @@ spec:
         volumeMounts:
         - mountPath: /export
           name: kotsadm-minio
-        - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-          name: default-token-bg6bv
-          readOnly: true
       containers:
       - command:
         - /bin/sh

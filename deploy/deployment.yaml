@@ -18,7 +18,7 @@ spec:
       containers:
         - name: volume-permissions-container-injector
           image: malston/volume-permissions-container-injector:latest
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           args:
           - -tlsCertFile=/etc/webhook/certs/cert.pem
           - -tlsKeyFile=/etc/webhook/certs/key.pem

@@ -5,7 +5,6 @@ metadata:
     kots.io/backup: velero
     kots.io/kotsadm: "true"
   name: kotsadm-postgres
-  namespace: sentry-pro
 spec:
   replicas: 1
   selector:
