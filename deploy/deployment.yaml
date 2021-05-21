@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: volume-permissions-container-injector-webhook-deployment
+  namespace: volume-permissions-container-injector
+  labels:
+    app: volume-permissions-container-injector
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: volume-permissions-container-injector
+  template:
+    metadata:
+      labels:
+        app: volume-permissions-container-injector
+    spec:
+      containers:
+        - name: volume-permissions-container-injector
+          image: malston/volume-permissions-container-injector:latest
+          imagePullPolicy: IfNotPresent
+          args:
+          - -initContainerCfgFile=/etc/webhook/config/volumepermissions.yaml
+          - -tlsCertFile=/etc/webhook/certs/cert.pem
+          - -tlsKeyFile=/etc/webhook/certs/key.pem
+          - -alsologtostderr
+          - -v=4
+          - 2>&1
+          volumeMounts:
+          - name: webhook-certs
+            mountPath: /etc/webhook/certs
+            readOnly: true
+          - name: webhook-config
+            mountPath: /etc/webhook/config
+      volumes:
+      - name: webhook-certs
+        secret:
+          secretName: volume-permissions-container-injector-webhook-certs
+      - name: webhook-config
+        configMap:
+          name: volume-permissions-container-injector-webhook-configmap

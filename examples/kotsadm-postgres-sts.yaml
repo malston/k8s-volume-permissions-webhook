@@ -1,0 +1,129 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  labels:
+    kots.io/backup: velero
+    kots.io/kotsadm: "true"
+  name: kotsadm-postgres
+  namespace: sentry-pro
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kotsadm-postgres
+  serviceName: ""
+  template:
+    metadata:
+      labels:
+        app: kotsadm-postgres
+        kots.io/backup: velero
+        kots.io/kotsadm: "true"
+    spec:
+      initContainers:
+      - command:
+        - /bin/bash
+        - -ec
+        - |
+          chown -R 999:999 /var/lib/postgresql/data
+        image: docker.io/bitnami/bitnami-shell:10
+        imagePullPolicy: Always
+        name: volume-permissions
+        securityContext:
+          runAsUser: 0
+        volumeMounts:
+        - mountPath: /var/lib/postgresql/data
+          name: kotsadm-postgres
+      containers:
+      - env:
+        - name: PGDATA
+          value: /var/lib/postgresql/data/pgdata
+        - name: POSTGRES_USER
+          value: kotsadm
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: password
+              name: kotsadm-postgres
+        - name: POSTGRES_DB
+          value: kotsadm
+        image: postgres:10.16-alpine
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - -i
+            - -c
+            - pg_isready -U kotsadm -h 127.0.0.1 -p 5432
+          failureThreshold: 3
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 5
+        name: kotsadm-postgres
+        ports:
+        - containerPort: 5432
+          name: postgres
+          protocol: TCP
+        readinessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - -i
+            - -c
+            - pg_isready -U kotsadm -h 127.0.0.1 -p 5432
+          failureThreshold: 3
+          initialDelaySeconds: 1
+          periodSeconds: 1
+          successThreshold: 1
+          timeoutSeconds: 1
+        resources:
+          limits:
+            cpu: 200m
+            memory: 200Mi
+          requests:
+            cpu: 100m
+            memory: 100Mi
+        volumeMounts:
+        - mountPath: /var/lib/postgresql/data
+          name: kotsadm-postgres
+        - mountPath: /etc/passwd
+          name: etc-passwd
+          subPath: passwd
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      securityContext:
+        fsGroup: 999
+        runAsUser: 999
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - name: kotsadm-postgres
+        persistentVolumeClaim:
+          claimName: kotsadm-postgres
+      - configMap:
+          defaultMode: 420
+          items:
+          - key: passwd
+            mode: 420
+            path: passwd
+          name: kotsadm-postgres
+        name: etc-passwd
+  updateStrategy:
+    rollingUpdate:
+      partition: 0
+    type: RollingUpdate
+  volumeClaimTemplates:
+  - apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      labels:
+        kots.io/backup: velero
+        kots.io/kotsadm: "true"
+      name: kotsadm-postgres
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 1Gi
+      volumeMode: Filesystem
