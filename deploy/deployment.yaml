@@ -20,7 +20,6 @@ spec:
           image: malston/volume-permissions-container-injector:latest
           imagePullPolicy: IfNotPresent
           args:
-          - -initContainerCfgFile=/etc/webhook/config/volumepermissions.yaml
           - -tlsCertFile=/etc/webhook/certs/cert.pem
           - -tlsKeyFile=/etc/webhook/certs/key.pem
           - -alsologtostderr
@@ -30,12 +29,7 @@ spec:
           - name: webhook-certs
             mountPath: /etc/webhook/certs
             readOnly: true
-          - name: webhook-config
-            mountPath: /etc/webhook/config
       volumes:
       - name: webhook-certs
         secret:
           secretName: volume-permissions-container-injector-webhook-certs
-      - name: webhook-config
-        configMap:
-          name: volume-permissions-container-injector-webhook-configmap

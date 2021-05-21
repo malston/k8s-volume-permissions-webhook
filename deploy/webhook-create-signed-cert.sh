@@ -46,9 +46,9 @@ while [[ $# -gt 0 ]]; do
     shift
 done
 
-[ -z "${service}" ] && service=volume-permissions-container-injector-webhook-svc
+[ -z "${service}" ] && service=vpci-webhook-svc
 [ -z "${secret}" ] && secret=volume-permissions-container-injector-webhook-certs
-[ -z "${namespace}" ] && namespace=default
+[ -z "${namespace}" ] && namespace=volume-permissions-container-injector
 
 if [ ! -x "$(command -v openssl)" ]; then
     echo "openssl not found"

@@ -23,5 +23,4 @@ bin
 *.swo
 *~
 
-release.yaml
-manager
+deploy/mutatingwebhook-ca-bundle.yaml

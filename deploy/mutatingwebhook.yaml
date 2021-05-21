@@ -8,7 +8,7 @@ webhooks:
 - name: volume-permissions-container-injector.malston.me
   clientConfig:
     service:
-      name: volume-permissions-container-injector-webhook-svc
+      name: vpci-webhook-svc
       namespace: volume-permissions-container-injector
       path: "/mutate"
     caBundle: ${CA_BUNDLE}

@@ -55,7 +55,7 @@ kubectl create ns volume-permissions-container-injector
 
 ```shell
 ./deploy/webhook-create-signed-cert.sh \
-    --service volume-permissions-container-injector-webhook-svc \
+    --service vpci-svc \
     --secret volume-permissions-container-injector-webhook-certs \
     --namespace volume-permissions-container-injector
 ```

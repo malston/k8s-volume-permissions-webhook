@@ -57,7 +57,6 @@ initContainers:
 )
 
 type WebhookServer struct {
-	initContainerConfig *Config
 	server        *http.Server
 	clientset *kubernetes.Clientset
 }
@@ -250,8 +249,12 @@ func (svr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admission
 		}
 	}
 
+	initContainerConfig, err := loadConfig(initContainer)
+	if err != nil {
+		glog.Errorf("Failed to load configuration: %v", err)
+	}
 	annotations := map[string]string{admissionWebhookAnnotationStatusKey: "injected"}
-	patchBytes, err := createPatch(&pod, svr.initContainerConfig, annotations)
+	patchBytes, err := createPatch(&pod, initContainerConfig, annotations)
 	if err != nil {
 		return &v1beta1.AdmissionResponse{
 			Result: &metav1.Status{

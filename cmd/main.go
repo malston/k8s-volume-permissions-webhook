@@ -25,11 +25,6 @@ func main() {
 	flag.StringVar(&parameters.initContainerCfgFile, "initContainerCfgFile", "/etc/webhook/config/initcontainerconfig.yaml", "File containing the mutation configuration.")
 	flag.Parse()
 
-	containerConfig, err := loadConfig(parameters.initContainerCfgFile)
-	if err != nil {
-		glog.Errorf("Failed to load configuration: %v", err)
-	}
-
 	pair, err := tls.LoadX509KeyPair(parameters.certFile, parameters.keyFile)
 	if err != nil {
 		glog.Errorf("Failed to load key pair: %v", err)
@@ -42,7 +37,6 @@ func main() {
 
 	clientset := kubernetes.NewForConfigOrDie(config)
 	wh := &WebhookServer{
-		initContainerConfig: containerConfig,
 		server: &http.Server{
 			Addr:      fmt.Sprintf(":%v", parameters.port),
 			TLSConfig: &tls.Config{Certificates: []tls.Certificate{pair}},
