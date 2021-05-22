@@ -1,26 +1,5 @@
 # Kubernetes Mutating Webhook for Volume Permissions Init Container
 
-## Prerequisites
-
-- [git](https://git-scm.com/downloads)
-- [go](https://golang.org/dl/) version v1.12+
-- [docker](https://docs.docker.com/install/) version 17.03+
-- [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/) version v1.11.3+
-- Access to a Kubernetes v1.11.3+ cluster with the `admissionregistration.k8s.io/v1beta1` API enabled. Verify that by the following command:
-
-```shell
-kubectl api-versions | grep admissionregistration.k8s.io
-```
-
-The result should be:
-
-```shell
-admissionregistration.k8s.io/v1
-admissionregistration.k8s.io/v1beta1
-```
-
-> Note: In addition, the `MutatingAdmissionWebhook` and `ValidatingAdmissionWebhook` admission controllers should be added and listed in the correct order in the admission-control flag of kube-apiserver.
-
 ## Build
 
 1. Build binary
@@ -105,10 +84,10 @@ kube-system                               Active   26m
 volume-permissions-container-injector     Active   17m
 ```
 
-3. Deploy an app in Kubernetes cluster, take `alpine` app as an example
+3. Deploy an app in Kubernetes cluster, take `kotsadm-minio` statefulset as an example
 
 ```shell
-kubectl apply -f examples/kotsadm-minio-sts.yaml -n injection --overrides='{"apiVersion":"v1","metadata":{"annotations":{"volume-permissions-container-injector-webhook.malston.me/inject":"yes"}}}'
+kubectl apply -f examples/kotsadm-minio-sts.yaml -n injection
 ```
 
 4. Verify sidecar container is injected
@@ -120,7 +99,7 @@ alpine                   2/2       Running       0          1m
 ```
 
 ```shell
-kubectl -n injection get pod alpine -o jsonpath="{.spec.initContainers[*].name}"
+kubectl -n injection get pod kots-minio-0 -o jsonpath="{.spec.initContainers[*].name}"
 alpine volume-permissions
 ```
 

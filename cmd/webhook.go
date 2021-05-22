@@ -36,9 +36,9 @@ const (
 	admissionWebhookAnnotationInjectKey = "volume-permissions-container-injector-webhook.malston.me/inject"
 	admissionWebhookAnnotationStatusKey = "volume-permissions-container-injector-webhook.malston.me/status"
 
-	configMapKey string = "volumepermissions.yaml"
+	configMapKey = "volumepermissions.yaml"
 
-	initContainerTemplate string = `
+	initContainerTemplate = `
 initContainers:
 - command:
   - /bin/bash
@@ -211,15 +211,27 @@ func replaceInitContainerStrings(pod corev1.Pod) string {
 		var container string
 		var permission int64
 		var mountPath, mountName string
-		if pod.Spec.SecurityContext != nil && *pod.Spec.SecurityContext.FSGroup > 0 {
-			permission = *pod.Spec.SecurityContext.FSGroup
-			container = strings.Replace(initContainerTemplate, "replace-permission", strconv.FormatInt(permission, 10), -1)
-		}
 		if len(pod.Spec.Containers[0].VolumeMounts) > 0 {
+			if pod.Spec.Containers[0].SecurityContext != nil && pod.Spec.Containers[0].SecurityContext.RunAsGroup != nil {
+				permission = *pod.Spec.Containers[0].SecurityContext.RunAsGroup
+				container = strings.Replace(initContainerTemplate, "replace-permission", strconv.FormatInt(permission, 10), -1)
+			}
 			mountPath = pod.Spec.Containers[0].VolumeMounts[0].MountPath
-			container = strings.Replace(container, "replace-mountPath", mountPath, -1)
+			if container == ""{
+				container = strings.Replace(initContainerTemplate, "/replace-mountPath", mountPath, -1)
+			} else {
+				container = strings.Replace(container, "/replace-mountPath", mountPath, -1)
+			}
 			mountName = pod.Spec.Containers[0].VolumeMounts[0].Name
 			container = strings.Replace(container, "replace-mountName", mountName, -1)
+		}
+		if pod.Spec.SecurityContext != nil && pod.Spec.SecurityContext.FSGroup != nil {
+			permission = *pod.Spec.SecurityContext.FSGroup
+			if container == ""{
+				container = strings.Replace(initContainerTemplate, "replace-permission", strconv.FormatInt(permission, 10), -1)
+			} else {
+				container = strings.Replace(container, "replace-permission", strconv.FormatInt(permission, 10), -1)
+			}
 		}
 		if container == "" || strings.Contains(container, "replace-") {
 			return ""

@@ -1,0 +1,108 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  annotations:
+    kots.io/app-slug: sentry-pro
+  labels:
+    app: redis
+    kots.io/app-slug: sentry-pro
+    kots.io/backup: velero
+  name: sentry-redis-master
+  namespace: sentry-pro
+spec:
+  podManagementPolicy: OrderedReady
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+      role: master
+  serviceName: redis-master
+  template:
+    metadata:
+      annotations:
+        kots.io/app-slug: sentry-pro
+      labels:
+        app: redis
+        component: sentry
+        kots.io/app-slug: sentry-pro
+        kots.io/backup: velero
+        role: master
+    spec:
+#      initContainers:
+#        - command:
+#            - /bin/bash
+#            - -ec
+#            - |
+#              chown -R 1001:1001 /bitnami/redis/data
+#          image: docker.io/bitnami/bitnami-shell:10
+#          imagePullPolicy: Always
+#          name: volume-permissions
+#          securityContext:
+#            runAsUser: 0
+#          volumeMounts:
+#            - mountPath: /bitnami/redis/data
+#              name: redis-data
+      containers:
+        - env:
+            - name: REDIS_REPLICATION_MODE
+              value: master
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: redis-password
+                  name: sentry-redis
+            - name: REDIS_DISABLE_COMMANDS
+              value: FLUSHDB,FLUSHALL
+          image: docker.io/bitnami/redis:4.0.11-debian-9
+          imagePullPolicy: Always
+          livenessProbe:
+            exec:
+              command:
+                - redis-cli
+                - ping
+            failureThreshold: 5
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          name: sentry-redis
+          ports:
+            - containerPort: 6379
+              name: redis
+              protocol: TCP
+          readinessProbe:
+            exec:
+              command:
+                - redis-cli
+                - ping
+            failureThreshold: 5
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+          resources: {}
+          volumeMounts:
+            - mountPath: /bitnami/redis/data
+              name: redis-data
+      securityContext:
+        fsGroup: 1001
+        runAsUser: 1001
+      serviceAccount: default
+      serviceAccountName: default
+  updateStrategy:
+    type: OnDelete
+  volumeClaimTemplates:
+    - apiVersion: v1
+      kind: PersistentVolumeClaim
+      metadata:
+        labels:
+          app: redis
+          component: master
+        name: redis-data
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 8Gi
+        volumeMode: Filesystem
