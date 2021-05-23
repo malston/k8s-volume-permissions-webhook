@@ -89,17 +89,25 @@ volume-permissions-container-injector     Active   17m
 kubectl apply -f examples/sentry-redis-sts.yaml -n sentry-pro
 ```
 
-4. Verify sidecar container is injected
+4. Verify init container is injected
 
 ```shell
 kubectl get pod
 NAME                     READY     STATUS        RESTARTS   AGE
-alpine                   2/2       Running       0          1m
+sentry-redis-0           1/1       Running       0          1m
 ```
 
 ```shell
 kubectl -n injection get pod sentry-redis-0 -o jsonpath="{.spec.initContainers[*].name}"
-alpine volume-permissions
+sentry-redis-0 volume-permissions
+```
+
+# Cleanup
+
+```shell
+kubectl delete sts sentry-redis-master
+kubectl delete cm sentry-redis-master-0-configmap
+kubectl delete pvc redis-data-sentry-redis-master-0
 ```
 
 ## Troubleshooting
@@ -110,3 +118,4 @@ Sometimes you may find that pod is not injected with an init container as expect
 2. The namespace in which application pod is deployed has the correct labels as configured in `mutatingwebhookconfiguration`.
 3. Check the `caBundle` is patched to `mutatingwebhookconfiguration` object by checking if `caBundle` fields is empty.
 4. Check if the application pod has annotation `volume-permissions-container-injector-webhook.morven.me/inject":"yes"`.
+5. Check if the configmap is there: `kubectl get cm sentry-redis-master-0-configmap -ojsonpath={.data.'volumepermissions\.yaml'}`
