@@ -33,11 +33,8 @@ var ignoredNamespaces = []string{
 }
 
 const (
-	admissionWebhookAnnotationInjectKey = "volume-permissions-container-injector-webhook.malston.me/inject"
 	admissionWebhookAnnotationStatusKey = "volume-permissions-container-injector-webhook.malston.me/status"
-
 	configMapKey = "volumepermissions.yaml"
-
 	initContainerTemplate = `initContainers:
 - command:
   - /bin/bash
@@ -114,16 +111,9 @@ func mutationRequired(ignoredList []string, metadata *metav1.ObjectMeta) bool {
 	status := annotations[admissionWebhookAnnotationStatusKey]
 
 	// determine whether to perform mutation based on annotation for the target resource
-	var required bool
+	required := true
 	if strings.ToLower(status) == "injected" {
 		required = false
-	} else {
-		switch strings.ToLower(annotations[admissionWebhookAnnotationInjectKey]) {
-		case "y", "yes", "true", "on":
-			required = true
-		default:
-			required = false
-		}
 	}
 
 	glog.Infof("Mutation policy for %v/%v: status: %q required:%v", metadata.Namespace, metadata.Name, status, required)
