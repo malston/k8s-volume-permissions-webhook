@@ -34,7 +34,7 @@ kubectl create ns volume-permissions-container-injector
 
 ```shell
 ./deploy/webhook-create-signed-cert.sh \
-    --service vpci-svc \
+    --service vpci-webhook-svc \
     --secret volume-permissions-container-injector-webhook-certs \
     --namespace volume-permissions-container-injector
 ```
@@ -42,9 +42,7 @@ kubectl create ns volume-permissions-container-injector
 3. Patch the `MutatingWebhookConfiguration` by set `caBundle` with correct value from Kubernetes cluster
 
 ```shell
-cat deploy/mutatingwebhook.yaml | \
-    deploy/webhook-patch-ca-bundle.sh > \
-    deploy/mutatingwebhook-ca-bundle.yaml
+cat deploy/mutatingwebhook.yaml | deploy/webhook-patch-ca-bundle.sh > deploy/mutatingwebhook-ca-bundle.yaml
 ```
 
 4. Deploy resources
@@ -72,8 +70,8 @@ volume-permissions-container-injector-webhook-deployment   1/1     1            
 2. Create new namespace `injection` and label it with `volume-permissions-container-injector=enabled`
 
 ```shell
-kubectl create ns injection
-kubectl label namespace injection volume-permissions-container-injection=enabled
+kubectl create ns sentry-pro
+kubectl label namespace sentry-pro volume-permissions-container-injection=enabled
 kubectl get namespace -L volume-permissions-container-injection
 
 NAME                                      STATUS   AGE   VOLUME-PERMISSIONS-CONTAINER-INJECTION
@@ -87,7 +85,7 @@ volume-permissions-container-injector     Active   17m
 3. Deploy an app in Kubernetes cluster, take `kotsadm-minio` statefulset as an example
 
 ```shell
-kubectl apply -f examples/kotsadm-minio-sts.yaml -n injection
+kubectl apply -f examples/sentry-redis-sts.yaml -n sentry-pro
 ```
 
 4. Verify sidecar container is injected
@@ -99,7 +97,7 @@ alpine                   2/2       Running       0          1m
 ```
 
 ```shell
-kubectl -n injection get pod kots-minio-0 -o jsonpath="{.spec.initContainers[*].name}"
+kubectl -n injection get pod sentry-redis-0 -o jsonpath="{.spec.initContainers[*].name}"
 alpine volume-permissions
 ```
 

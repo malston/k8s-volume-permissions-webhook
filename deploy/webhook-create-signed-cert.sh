@@ -122,7 +122,7 @@ if [[ ${serverCert} == '' ]]; then
 fi
 echo "${serverCert}" | openssl base64 -d -A -out "${tmpdir}"/server-cert.pem
 
-
+kubectl -n ${namespace} delete secret ${secret} --ignore-not-found
 # create the secret with CA cert and server cert/key
 kubectl create secret generic ${secret} \
         --from-file=key.pem="${tmpdir}"/server-key.pem \

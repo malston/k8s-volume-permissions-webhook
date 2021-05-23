@@ -13,15 +13,15 @@ initContainers:
   - /bin/bash
   - -ec
   - |
-	chown -R 1001:1001 /bitnami/redis/data
+    chown -R 1001:1001 /bitnami/redis/data
   image: docker.io/bitnami/bitnami-shell:10
   imagePullPolicy: Always
   name: volume-permissions
   securityContext:
-	runAsUser: 0
+    runAsUser: 0
   volumeMounts:
   - mountPath: /bitnami/redis/data
-	name: redis-data
+    name: redis-data
 `
 	posCases := []struct {
 		pod  *corev1.Pod

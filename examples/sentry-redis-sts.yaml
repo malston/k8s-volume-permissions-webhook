@@ -21,6 +21,7 @@ spec:
     metadata:
       annotations:
         kots.io/app-slug: sentry-pro
+        volume-permissions-container-injector-webhook.malston.me/inject: "true"
       labels:
         app: redis
         component: sentry

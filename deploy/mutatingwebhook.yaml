@@ -1,7 +1,7 @@
 apiVersion: admissionregistration.k8s.io/v1beta1
 kind: MutatingWebhookConfiguration
 metadata:
-  name: volume-permissions-container-injector-webhook-cfg
+  name: volume-permissions-container-injector-webhook
   labels:
     app: volume-permissions-container-injector
 webhooks:

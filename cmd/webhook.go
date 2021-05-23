@@ -44,15 +44,15 @@ initContainers:
   - /bin/bash
   - -ec
   - |
-	chown -R replace-permission:replace-permission /replace-mountPath
+    chown -R replace-permission:replace-permission /replace-mountPath
   image: docker.io/bitnami/bitnami-shell:10
   imagePullPolicy: Always
   name: volume-permissions
   securityContext:
-	runAsUser: 0
+    runAsUser: 0
   volumeMounts:
   - mountPath: /replace-mountPath
-	name: replace-mountName
+    name: replace-mountName
 `
 )
 
@@ -274,7 +274,7 @@ func (svr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admission
 		}
 	}
 
-	err := svr.createUpdateConfigMap(context.TODO(), fmt.Sprintf("%s-configmap", pod.Name), req.Namespace, initContainer)
+	err := svr.createUpdateConfigMap(context.TODO(), fmt.Sprintf("%s-configmap", pod.Name), pod.Namespace, initContainer)
 	if err != nil {
 		return &v1beta1.AdmissionResponse{
 			Result: &metav1.Status{
