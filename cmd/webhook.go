@@ -176,6 +176,7 @@ func updateAnnotation(target map[string]string, added map[string]string) (patch 
 }
 
 func (svr *WebhookServer) createUpdateConfigMap(ctx context.Context, name, namespace, content string) error {
+	glog.Infof("creating configmap with data: %s", content)
 	fqn := fmt.Sprintf("%s-%s", namespace, name)
 	cm := corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
@@ -200,7 +201,7 @@ func (svr *WebhookServer) createUpdateConfigMap(ctx context.Context, name, names
 func createPatch(pod *corev1.Pod, initContainerConfig *Config, annotations map[string]string) ([]byte, error) {
 	var patch []patchOperation
 
-	patch = append(patch, addContainer(pod.Spec.Containers, initContainerConfig.Containers, "/spec/initContainers")...)
+	patch = append(patch, addContainer(pod.Spec.InitContainers, initContainerConfig.Containers, "/spec/initContainers")...)
 	patch = append(patch, updateAnnotation(pod.Annotations, annotations)...)
 
 	return json.Marshal(patch)
@@ -287,6 +288,7 @@ func (svr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admission
 	if err != nil {
 		glog.Errorf("Failed to load configuration: %v", err)
 	}
+	glog.Infof("initContainerConfig: %+v", initContainerConfig)
 	annotations := map[string]string{admissionWebhookAnnotationStatusKey: "injected"}
 	patchBytes, err := createPatch(&pod, initContainerConfig, annotations)
 	if err != nil {
