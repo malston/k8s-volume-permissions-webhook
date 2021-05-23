@@ -50,6 +50,7 @@ cat deploy/mutatingwebhook.yaml | deploy/webhook-patch-ca-bundle.sh > deploy/mut
 ```shell
 kubectl apply -f deploy/deployment.yaml
 kubectl apply -f deploy/service.yaml
+kubectl apply -f deploy/role.yaml
 kubectl apply -f deploy/mutatingwebhook-ca-bundle.yaml
 ```
 
