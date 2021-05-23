@@ -263,14 +263,14 @@ func (svr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admission
 		}
 	}
 
-	err := svr.createUpdateConfigMap(context.TODO(), fmt.Sprintf("%s-configmap", pod.Name), pod.Namespace, initContainer)
-	if err != nil {
-		return &v1beta1.AdmissionResponse{
-			Result: &metav1.Status{
-				Message: err.Error(),
-			},
-		}
-	}
+	//err := svr.createUpdateConfigMap(context.TODO(), fmt.Sprintf("%s-configmap", pod.Name), pod.Namespace, initContainer)
+	//if err != nil {
+	//	return &v1beta1.AdmissionResponse{
+	//		Result: &metav1.Status{
+	//			Message: err.Error(),
+	//		},
+	//	}
+	//}
 
 	initContainerConfig, err := loadConfig(initContainer)
 	if err != nil {
