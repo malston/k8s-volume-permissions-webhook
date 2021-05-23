@@ -70,7 +70,6 @@ type Parameters struct {
 
 type Config struct {
 	Containers []corev1.Container `yaml:"initContainers"`
-	Volumes    []corev1.Volume    `yaml:"volumes"`
 }
 
 type patchOperation struct {
