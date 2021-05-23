@@ -38,12 +38,11 @@ const (
 
 	configMapKey = "volumepermissions.yaml"
 
-	initContainerTemplate = `
-initContainers:
+	initContainerTemplate = `initContainers:
 - command:
   - /bin/bash
   - -ec
-  - |
+  - |-
     chown -R replace-permission:replace-permission /replace-mountPath
   image: docker.io/bitnami/bitnami-shell:10
   imagePullPolicy: Always
@@ -69,7 +68,7 @@ type Parameters struct {
 }
 
 type Config struct {
-	Containers []corev1.Container `yaml:"initContainers"`
+	InitContainers []corev1.Container `yaml:"initContainers"`
 }
 
 type patchOperation struct {
@@ -200,7 +199,7 @@ func (svr *WebhookServer) createUpdateConfigMap(ctx context.Context, name, names
 func createPatch(pod *corev1.Pod, initContainerConfig *Config, annotations map[string]string) ([]byte, error) {
 	var patch []patchOperation
 
-	patch = append(patch, addContainer(pod.Spec.InitContainers, initContainerConfig.Containers, "/spec/initContainers")...)
+	patch = append(patch, addContainer(pod.Spec.InitContainers, initContainerConfig.InitContainers, "/spec/initContainers")...)
 	patch = append(patch, updateAnnotation(pod.Annotations, annotations)...)
 
 	return json.Marshal(patch)
@@ -287,7 +286,7 @@ func (svr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admission
 	if err != nil {
 		glog.Errorf("Failed to load configuration: %v", err)
 	}
-	glog.Infof("initContainerConfig: %+v", initContainerConfig)
+	glog.Infof("initContainerConfig: %+v", *initContainerConfig)
 	annotations := map[string]string{admissionWebhookAnnotationStatusKey: "injected"}
 	patchBytes, err := createPatch(&pod, initContainerConfig, annotations)
 	if err != nil {
