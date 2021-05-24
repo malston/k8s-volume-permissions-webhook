@@ -69,7 +69,7 @@ func TestReplaceInitContainerStrings(t *testing.T) {
 		for _, c := range posCases {
 			got := replaceInitContainerStrings(*c.pod)
 			if diff := cmp.Diff(want, got); diff != "" {
-				t.Errorf("replaceInitContainerStrings(%+v) got %s want %s", c.pod.Name, got, want)
+				t.Errorf("replaceInitContainerStrings(%s) got %s want %s", c.pod.Name, got, want)
 			}
 		}
 	})
@@ -181,7 +181,7 @@ func TestReplaceInitContainerStrings(t *testing.T) {
 			want := ""
 			got := replaceInitContainerStrings(*c.pod)
 			if diff := cmp.Diff("", got); diff != "" {
-				t.Errorf("replaceInitContainerStrings(%+v) got %s want %s", &c, got, want)
+				t.Errorf("replaceInitContainerStrings(%s) got %s want %s", c.pod.Name, got, want)
 			}
 		}
 	})

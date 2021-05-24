@@ -201,20 +201,20 @@ func replaceInitContainerStrings(pod corev1.Pod) string {
 		var permission int64
 		var mountPath, mountName string
 		if len(pod.Spec.Containers[0].VolumeMounts) > 0 {
-			if strings.Contains(mountPath, "serviceaccount") {
+			mountPath = pod.Spec.Containers[0].VolumeMounts[0].MountPath
+			mountName = pod.Spec.Containers[0].VolumeMounts[0].Name
+			if strings.Contains(mountPath, "serviceaccount") || strings.Contains(mountName, "default-token"){
 				return ""
 			}
 			if pod.Spec.Containers[0].SecurityContext != nil && pod.Spec.Containers[0].SecurityContext.RunAsGroup != nil {
 				permission = *pod.Spec.Containers[0].SecurityContext.RunAsGroup
 				container = strings.Replace(initContainerTemplate, "replace-permission", strconv.FormatInt(permission, 10), -1)
 			}
-			mountPath = pod.Spec.Containers[0].VolumeMounts[0].MountPath
 			if container == "" {
 				container = strings.Replace(initContainerTemplate, "/replace-mountPath", mountPath, -1)
 			} else {
 				container = strings.Replace(container, "/replace-mountPath", mountPath, -1)
 			}
-			mountName = pod.Spec.Containers[0].VolumeMounts[0].Name
 			container = strings.Replace(container, "replace-mountName", mountName, -1)
 		}
 		if pod.Spec.SecurityContext != nil && pod.Spec.SecurityContext.FSGroup != nil {
