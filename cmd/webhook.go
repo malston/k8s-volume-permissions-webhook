@@ -195,30 +195,33 @@ func createPatch(pod *corev1.Pod, initContainerConfig *Config, annotations map[s
 	return json.Marshal(patch)
 }
 
-func replaceInitContainerStrings(pod corev1.Pod) string {
-	if len(pod.Spec.Containers) > 0 {
+func replaceInitContainerStrings(podSecurityContext *corev1.PodSecurityContext, containers []corev1.Container, volumes []corev1.Volume) string {
+	volume := findVolumeWithPersistentVolumeClaim(volumes)
+	for _, c := range containers {
 		var container string
 		var permission int64
 		var mountPath, mountName string
-		if len(pod.Spec.Containers[0].VolumeMounts) > 0 {
-			mountPath = pod.Spec.Containers[0].VolumeMounts[0].MountPath
-			mountName = pod.Spec.Containers[0].VolumeMounts[0].Name
+		for _, v := range c.VolumeMounts {
+			mountPath = v.MountPath
+			mountName = v.Name
 			if strings.Contains(mountPath, "serviceaccount") || strings.Contains(mountName, "default-token"){
-				return ""
+				continue
 			}
-			if pod.Spec.Containers[0].SecurityContext != nil && pod.Spec.Containers[0].SecurityContext.RunAsGroup != nil {
-				permission = *pod.Spec.Containers[0].SecurityContext.RunAsGroup
-				container = strings.Replace(initContainerTemplate, "replace-permission", strconv.FormatInt(permission, 10), -1)
+			if volume == nil || volume.Name == v.Name {
+				if c.SecurityContext != nil && c.SecurityContext.RunAsGroup != nil {
+					permission = *c.SecurityContext.RunAsGroup
+					container = strings.Replace(initContainerTemplate, "replace-permission", strconv.FormatInt(permission, 10), -1)
+				}
+				if container == "" {
+					container = strings.Replace(initContainerTemplate, "/replace-mountPath", mountPath, -1)
+				} else {
+					container = strings.Replace(container, "/replace-mountPath", mountPath, -1)
+				}
+				container = strings.Replace(container, "replace-mountName", mountName, -1)
 			}
-			if container == "" {
-				container = strings.Replace(initContainerTemplate, "/replace-mountPath", mountPath, -1)
-			} else {
-				container = strings.Replace(container, "/replace-mountPath", mountPath, -1)
-			}
-			container = strings.Replace(container, "replace-mountName", mountName, -1)
 		}
-		if pod.Spec.SecurityContext != nil && pod.Spec.SecurityContext.FSGroup != nil {
-			permission = *pod.Spec.SecurityContext.FSGroup
+		if podSecurityContext != nil && podSecurityContext.FSGroup != nil {
+			permission = *podSecurityContext.FSGroup
 			if container == "" {
 				container = strings.Replace(initContainerTemplate, "replace-permission", strconv.FormatInt(permission, 10), -1)
 			} else {
@@ -226,12 +229,21 @@ func replaceInitContainerStrings(pod corev1.Pod) string {
 			}
 		}
 		if container == "" || strings.Contains(container, "replace-") {
-			return ""
+			continue
 		}
 		return container
 	}
 
 	return ""
+}
+
+func findVolumeWithPersistentVolumeClaim(volumes []corev1.Volume) *corev1.Volume {
+	for _, v := range volumes {
+		if v.VolumeSource.PersistentVolumeClaim != nil {
+			return &v
+		}
+	}
+	return nil
 }
 
 // main mutation process
@@ -258,11 +270,14 @@ func (svr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admission
 		}
 	}
 
-	initContainer := replaceInitContainerStrings(pod)
+	initContainer := replaceInitContainerStrings(pod.Spec.SecurityContext, pod.Spec.Containers, pod.Spec.Volumes)
 	if initContainer == "" {
-		glog.Infof("Skipping mutation for %s/%s due to pod not containing a securityContext or volumes", pod.Namespace, pod.Name)
-		return &v1beta1.AdmissionResponse{
-			Allowed: true,
+		initContainer = replaceInitContainerStrings(pod.Spec.SecurityContext, pod.Spec.InitContainers, pod.Spec.Volumes)
+		if initContainer == "" {
+			glog.Infof("Skipping mutation for %s/%s due to pod not containing a securityContext or volumes", pod.Namespace, pod.Name)
+			return &v1beta1.AdmissionResponse{
+				Allowed: true,
+			}
 		}
 	}
 
