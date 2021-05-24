@@ -1,0 +1,108 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  annotations:
+    kots.io/app-slug: sentry-pro
+    kots.io/hook-delete-policy: hook-succeeded, hook-failed
+  labels:
+    app: sentry
+    kots.io/app-slug: sentry-pro
+    kots.io/backup: velero
+  name: sentry-user-create
+  namespace: sentry-pro
+spec:
+  backoffLimit: 12
+  completions: 1
+  parallelism: 1
+  selector:
+    matchLabels:
+      controller-uid: 740c700c-b626-43d5-84e9-9306b40b4d99
+  template:
+    metadata:
+      annotations:
+        kots.io/app-slug: sentry-pro
+      labels:
+        app: sentry
+        component: sentry
+        controller-uid: 740c700c-b626-43d5-84e9-9306b40b4d99
+        job-name: sentry-user-create
+        kots.io/app-slug: sentry-pro
+        kots.io/backup: velero
+      name: sentry-user-create
+    spec:
+      containers:
+      - command:
+        - sentry
+        - createuser
+        - --no-input
+        - --email
+        - $(SENTRY_ADMIN_USERNAME)
+        - --superuser
+        - --password
+        - $(SENTRY_USER_PASSWORD)
+        env:
+        - name: SENTRY_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              key: sentry-secret
+              name: sentry
+        - name: SENTRY_DB_USER
+          value: sentry
+        - name: SENTRY_DB_NAME
+          value: sentry
+        - name: SENTRY_DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: postgres-password
+              name: sentry-postgresql
+        - name: SENTRY_POSTGRES_HOST
+          value: sentry-postgresql
+        - name: SENTRY_POSTGRES_PORT
+          value: "5432"
+        - name: SENTRY_REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: redis-password
+              name: sentry-redis
+        - name: SENTRY_REDIS_HOST
+          value: sentry-redis-master
+        - name: SENTRY_REDIS_PORT
+          value: "6379"
+        - name: SENTRY_EMAIL_HOST
+        - name: SENTRY_EMAIL_PORT
+        - name: SENTRY_EMAIL_USER
+        - name: SENTRY_EMAIL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: smtp-password
+              name: sentry
+        - name: SENTRY_USER_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: user-password
+              name: sentry
+        - name: SENTRY_ADMIN_USERNAME
+          value: admin
+        - name: SENTRY_EMAIL_USE_TLS
+          value: "false"
+        - name: SENTRY_SERVER_EMAIL
+          value: sentry@sentry.local
+        image: sentry:9.1.1
+        imagePullPolicy: IfNotPresent
+        name: user-create-job
+        resources: {}
+        volumeMounts:
+        - mountPath: /etc/sentry
+          name: config
+          readOnly: true
+      dnsPolicy: ClusterFirst
+      restartPolicy: Never
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - configMap:
+          defaultMode: 420
+          name: sentry
+        name: config
+
