@@ -68,7 +68,13 @@ NAME                                  READY   UP-TO-DATE   AVAILABLE   AGE
 volume-permissions-container-injector-webhook-deployment   1/1     1            1           67s
 ```
 
-2. Create new namespace `injection` and label it with `volume-permissions-container-injector=enabled`
+2. Follow the logs of the webhook
+
+```shell
+kubectl -n volume-permissions-container-injector logs -l app=volume-permissions-container-injector --follow
+```
+
+3. Create new namespace `injection` and label it with `volume-permissions-container-injector=enabled`
 
 ```shell
 kubectl create ns sentry-pro
@@ -83,13 +89,13 @@ kube-system                               Active   26m
 volume-permissions-container-injector     Active   17m
 ```
 
-3. Deploy an app in Kubernetes cluster, take `kotsadm-minio` statefulset as an example
+4. Deploy an app in Kubernetes cluster, take `kotsadm-minio` statefulset as an example
 
 ```shell
 kubectl apply -f examples/sentry-redis-sts.yaml -n sentry-pro
 ```
 
-4. Verify init container is injected
+5. Verify init container is injected
 
 ```shell
 kubectl get pod
