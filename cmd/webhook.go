@@ -201,12 +201,15 @@ func replaceInitContainerStrings(pod corev1.Pod) string {
 		var permission int64
 		var mountPath, mountName string
 		if len(pod.Spec.Containers[0].VolumeMounts) > 0 {
+			if strings.Contains(mountPath, "serviceaccount") {
+				return ""
+			}
 			if pod.Spec.Containers[0].SecurityContext != nil && pod.Spec.Containers[0].SecurityContext.RunAsGroup != nil {
 				permission = *pod.Spec.Containers[0].SecurityContext.RunAsGroup
 				container = strings.Replace(initContainerTemplate, "replace-permission", strconv.FormatInt(permission, 10), -1)
 			}
 			mountPath = pod.Spec.Containers[0].VolumeMounts[0].MountPath
-			if container == ""{
+			if container == "" {
 				container = strings.Replace(initContainerTemplate, "/replace-mountPath", mountPath, -1)
 			} else {
 				container = strings.Replace(container, "/replace-mountPath", mountPath, -1)
@@ -216,7 +219,7 @@ func replaceInitContainerStrings(pod corev1.Pod) string {
 		}
 		if pod.Spec.SecurityContext != nil && pod.Spec.SecurityContext.FSGroup != nil {
 			permission = *pod.Spec.SecurityContext.FSGroup
-			if container == ""{
+			if container == "" {
 				container = strings.Replace(initContainerTemplate, "replace-permission", strconv.FormatInt(permission, 10), -1)
 			} else {
 				container = strings.Replace(container, "replace-permission", strconv.FormatInt(permission, 10), -1)
@@ -262,15 +265,6 @@ func (svr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admission
 			Allowed: true,
 		}
 	}
-
-	//err := svr.createUpdateConfigMap(context.TODO(), fmt.Sprintf("%s-configmap", pod.Name), pod.Namespace, initContainer)
-	//if err != nil {
-	//	return &v1beta1.AdmissionResponse{
-	//		Result: &metav1.Status{
-	//			Message: err.Error(),
-	//		},
-	//	}
-	//}
 
 	initContainerConfig, err := loadConfig(initContainer)
 	if err != nil {
