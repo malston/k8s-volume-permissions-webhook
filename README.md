@@ -62,7 +62,9 @@ kubectl apply -f deploy/mutatingwebhook-ca-bundle.yaml
 kubectl -n volume-permissions-container-injector get pod
 NAME                                                   READY   STATUS    RESTARTS   AGE
 volume-permissions-container-injector-webhook-deployment-7c8bc5f4c9-28c84   1/1     Running   0          30s
+```
 
+```shell
 kubectl -n volume-permissions-container-injector get deploy
 NAME                                  READY   UP-TO-DATE   AVAILABLE   AGE
 volume-permissions-container-injector-webhook-deployment   1/1     1            1           67s
@@ -80,7 +82,6 @@ kubectl -n volume-permissions-container-injector logs -l app=volume-permissions-
 kubectl create ns sentry-pro
 kubectl label namespace sentry-pro volume-permissions-container-injection=enabled
 kubectl get namespace -L volume-permissions-container-injection
-
 NAME                                      STATUS   AGE   VOLUME-PERMISSIONS-CONTAINER-INJECTION
 default                                   Active   26m
 sentry-pro                                 Active   13s   enabled
