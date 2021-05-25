@@ -125,7 +125,6 @@ func addContainer(target, added []corev1.Container, basePath string) ([]patchOpe
 	var value []corev1.Container
 	var patch []patchOperation
 	for _, add := range added {
-		value = append(value, add)
 		path := basePath
 		op := "add"
 		if first {
@@ -134,6 +133,7 @@ func addContainer(target, added []corev1.Container, basePath string) ([]patchOpe
 		} else {
 			//path = path + "/-"
 			op = "replace"
+			value = append([]corev1.Container{add}, target...)
 		}
 		patch = append(patch, patchOperation{
 			Op:    op,

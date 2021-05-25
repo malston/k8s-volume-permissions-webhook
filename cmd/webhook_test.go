@@ -322,6 +322,7 @@ func TestAddContainer(t *testing.T) {
 			want[0].Value = initContainerConfig.InitContainers
 			if c.initContainers {
 				want[0].Op = "replace"
+				want[0].Value = append(initContainerConfig.InitContainers, c.pod.Spec.InitContainers...)
 			}
 			got := addContainer(c.pod.Spec.InitContainers, initContainerConfig.InitContainers, "/spec/initContainers")
 			if diff := cmp.Diff(want, got); diff != "" {
