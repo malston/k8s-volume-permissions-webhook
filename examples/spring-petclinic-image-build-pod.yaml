@@ -1,43 +1,13 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  annotations:
-    image.kpack.io/buildChanges: '[{"reason":"CONFIG","old":{"resources":{},"source":{}},"new":{"resources":{},"source":{"git":{"url":"https://github.com/malston/spring-petclinic","revision":"8239cd9361836385ba9415fb96b6868201a603a2"}}}}]'
-    image.kpack.io/reason: CONFIG
-    kubectl.kubernetes.io/last-applied-configuration: |
-      {"apiVersion":"kpack.io/v1alpha1","kind":"Image","metadata":{"annotations":{},"name":"spring-petclinic-image","namespace":"kpack-tutorial"},"spec":{"builder":{"kind":"Builder","name":"heroku-builder"},"cacheSize":"1.5Gi","failedBuildHistoryLimit":5,"serviceAccount":"service-account","source":{"git":{"revision":"main","url":"https://github.com/malston/spring-petclinic"}},"successBuildHistoryLimit":5,"tag":"harbor.markalston.net/tanzu/spring-petclinic"}}
-    kubernetes.io/psp: vmware-system-privileged
-  creationTimestamp: "2021-05-24T17:14:10Z"
-  labels:
-    image.kpack.io/buildNumber: "1"
-    image.kpack.io/image: spring-petclinic-image
-    image.kpack.io/imageGeneration: "1"
-    kpack.io/build: spring-petclinic-image-build-1-hxszd
   name: spring-petclinic-image-build-1-hxszd-build-pod
   namespace: kpack-tutorial
-  ownerReferences:
-  - apiVersion: kpack.io/v1alpha1
-    blockOwnerDeletion: true
-    controller: true
-    kind: Build
-    name: spring-petclinic-image-build-1-hxszd
-    uid: 65c6a8b4-b18c-49dc-83c4-88f626bcd4e3
-  resourceVersion: "25262381"
-  uid: 61b52355-7d9d-4aa7-b79d-217486ddeff1
 spec:
   containers:
-  - image: gcr.io/cf-build-service-public/kpack/completion@sha256:7b8b829ee21f6009ea9b580cad86fb2f74f28d2aa34676d4a130fb62b9fc9893
+  - name: completion
+    image: gcr.io/cf-build-service-public/kpack/completion@sha256:7b8b829ee21f6009ea9b580cad86fb2f74f28d2aa34676d4a130fb62b9fc9893
     imagePullPolicy: IfNotPresent
-    name: completion
-    resources: {}
-    terminationMessagePath: /dev/termination-log
-    terminationMessagePolicy: File
-    volumeMounts:
-    - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-      name: service-account-token-z7cpd
-      readOnly: true
-  dnsPolicy: ClusterFirst
-  enableServiceLinks: true
   imagePullSecrets:
   - name: registry-credentials
   initContainers:
@@ -61,9 +31,6 @@ spec:
     image: gcr.io/cf-build-service-public/kpack/build-init@sha256:94cdd9223310c2bbc6b9f10d17f754337d782f32ac1cd7de58d3e78746d5ab7c
     imagePullPolicy: IfNotPresent
     name: prepare
-    resources: {}
-    terminationMessagePath: /dev/termination-log
-    terminationMessagePolicy: File
     volumeMounts:
     - mountPath: /var/build-secrets/registry-credentials
       name: secret-volume-registry-credentials
@@ -81,9 +48,6 @@ spec:
       name: home-dir
     - mountPath: /projectMetadata
       name: layers-dir
-    - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-      name: service-account-token-z7cpd
-      readOnly: true
     workingDir: /workspace
   - args:
     - -app=/workspace
@@ -97,9 +61,6 @@ spec:
     image: harbor.markalston.net/kpack/heroku-builder@sha256:04a70d51b27825468347a19e992e000f80e18177973126f48cb828de7c24f138
     imagePullPolicy: IfNotPresent
     name: detect
-    resources: {}
-    terminationMessagePath: /dev/termination-log
-    terminationMessagePolicy: File
     volumeMounts:
     - mountPath: /layers
       name: layers-dir
@@ -107,9 +68,6 @@ spec:
       name: platform-dir
     - mountPath: /workspace
       name: workspace-dir
-    - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-      name: service-account-token-z7cpd
-      readOnly: true
   - args:
     - -layers=/layers
     - -group=/layers/group.toml
@@ -126,9 +84,6 @@ spec:
     image: harbor.markalston.net/kpack/heroku-builder@sha256:04a70d51b27825468347a19e992e000f80e18177973126f48cb828de7c24f138
     imagePullPolicy: IfNotPresent
     name: analyze
-    resources: {}
-    terminationMessagePath: /dev/termination-log
-    terminationMessagePolicy: File
     volumeMounts:
     - mountPath: /layers
       name: layers-dir
@@ -138,9 +93,6 @@ spec:
       name: home-dir
     - mountPath: /cache
       name: cache-dir
-    - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-      name: service-account-token-z7cpd
-      readOnly: true
   - args:
     - -group=/layers/group.toml
     - -layers=/layers
@@ -153,17 +105,11 @@ spec:
     image: harbor.markalston.net/kpack/heroku-builder@sha256:04a70d51b27825468347a19e992e000f80e18177973126f48cb828de7c24f138
     imagePullPolicy: IfNotPresent
     name: restore
-    resources: {}
-    terminationMessagePath: /dev/termination-log
-    terminationMessagePolicy: File
     volumeMounts:
     - mountPath: /layers
       name: layers-dir
     - mountPath: /cache
       name: cache-dir
-    - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-      name: service-account-token-z7cpd
-      readOnly: true
   - args:
     - -layers=/layers
     - -app=/workspace
@@ -187,9 +133,6 @@ spec:
       name: platform-dir
     - mountPath: /workspace
       name: workspace-dir
-    - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-      name: service-account-token-z7cpd
-      readOnly: true
   - args:
     - -layers=/layers
     - -app=/workspace
@@ -225,16 +168,11 @@ spec:
       name: cache-dir
     - mountPath: /var/report
       name: report-dir
-    - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-      name: service-account-token-z7cpd
-      readOnly: true
-  nodeName: dev-cluster-workers-j7tc7-8546bb84bf-cbp29
   nodeSelector:
     kubernetes.io/os: linux
   preemptionPolicy: PreemptLowerPriority
   priority: 0
   restartPolicy: Never
-  schedulerName: default-scheduler
   securityContext:
     fsGroup: 1000
     runAsGroup: 1000
@@ -242,15 +180,6 @@ spec:
   serviceAccount: service-account
   serviceAccountName: service-account
   terminationGracePeriodSeconds: 30
-  tolerations:
-  - effect: NoExecute
-    key: node.kubernetes.io/not-ready
-    operator: Exists
-    tolerationSeconds: 300
-  - effect: NoExecute
-    key: node.kubernetes.io/unreachable
-    operator: Exists
-    tolerationSeconds: 300
   volumes:
   - name: secret-volume-registry-credentials
     secret:
@@ -277,119 +206,3 @@ spec:
     name: builder-pull-secrets-dir
   - emptyDir: {}
     name: notary-dir
-  - name: service-account-token-z7cpd
-    secret:
-      defaultMode: 420
-      secretName: service-account-token-z7cpd
-status:
-  conditions:
-  - lastProbeTime: null
-    lastTransitionTime: "2021-05-24T17:15:10Z"
-    message: 'containers with incomplete status: [analyze restore build export]'
-    reason: ContainersNotInitialized
-    status: "False"
-    type: Initialized
-  - lastProbeTime: null
-    lastTransitionTime: "2021-05-24T17:15:10Z"
-    message: 'containers with unready status: [completion]'
-    reason: ContainersNotReady
-    status: "False"
-    type: Ready
-  - lastProbeTime: null
-    lastTransitionTime: "2021-05-24T17:15:10Z"
-    message: 'containers with unready status: [completion]'
-    reason: ContainersNotReady
-    status: "False"
-    type: ContainersReady
-  - lastProbeTime: null
-    lastTransitionTime: "2021-05-24T17:15:12Z"
-    status: "True"
-    type: PodScheduled
-  containerStatuses:
-  - image: gcr.io/cf-build-service-public/kpack/completion@sha256:7b8b829ee21f6009ea9b580cad86fb2f74f28d2aa34676d4a130fb62b9fc9893
-    imageID: ""
-    lastState: {}
-    name: completion
-    ready: false
-    restartCount: 0
-    started: false
-    state:
-      waiting:
-        reason: PodInitializing
-  hostIP: 192.168.12.20
-  initContainerStatuses:
-  - containerID: containerd://93e3c0a287357b29bbc119570ef5fd63d2eee7495cc3714257cdfe26840eb512
-    image: sha256:3bfce9845b9425a04fa9f0ee90665c114d70c7d4fd9d78abba84cbdc93f01791
-    imageID: gcr.io/cf-build-service-public/kpack/build-init@sha256:94cdd9223310c2bbc6b9f10d17f754337d782f32ac1cd7de58d3e78746d5ab7c
-    lastState: {}
-    name: prepare
-    ready: true
-    restartCount: 0
-    state:
-      terminated:
-        containerID: containerd://93e3c0a287357b29bbc119570ef5fd63d2eee7495cc3714257cdfe26840eb512
-        exitCode: 0
-        finishedAt: "2021-05-24T17:15:22Z"
-        reason: Completed
-        startedAt: "2021-05-24T17:15:19Z"
-  - containerID: containerd://2c168ab74a2e17d3a8d3352a13408fb973585bd48d2299eeb22b34d6660c8ad4
-    image: sha256:072b9dd455a4a595678145f04d033e52009c02b21d62082f9264dafbd6144677
-    imageID: harbor.markalston.net/kpack/heroku-builder@sha256:04a70d51b27825468347a19e992e000f80e18177973126f48cb828de7c24f138
-    lastState: {}
-    name: detect
-    ready: true
-    restartCount: 0
-    state:
-      terminated:
-        containerID: containerd://2c168ab74a2e17d3a8d3352a13408fb973585bd48d2299eeb22b34d6660c8ad4
-        exitCode: 0
-        finishedAt: "2021-05-24T17:16:39Z"
-        reason: Completed
-        startedAt: "2021-05-24T17:16:39Z"
-  - containerID: containerd://5d1fc956253529da8372648452b80b17957b6ed3e45d0cd044ed57f2d9cc5409
-    image: sha256:072b9dd455a4a595678145f04d033e52009c02b21d62082f9264dafbd6144677
-    imageID: harbor.markalston.net/kpack/heroku-builder@sha256:04a70d51b27825468347a19e992e000f80e18177973126f48cb828de7c24f138
-    lastState: {}
-    name: analyze
-    ready: false
-    restartCount: 0
-    state:
-      terminated:
-        containerID: containerd://5d1fc956253529da8372648452b80b17957b6ed3e45d0cd044ed57f2d9cc5409
-        exitCode: 1
-        finishedAt: "2021-05-24T17:16:41Z"
-        reason: Error
-        startedAt: "2021-05-24T17:16:41Z"
-  - image: harbor.markalston.net/kpack/heroku-builder@sha256:04a70d51b27825468347a19e992e000f80e18177973126f48cb828de7c24f138
-    imageID: ""
-    lastState: {}
-    name: restore
-    ready: false
-    restartCount: 0
-    state:
-      waiting:
-        reason: PodInitializing
-  - image: harbor.markalston.net/kpack/heroku-builder@sha256:04a70d51b27825468347a19e992e000f80e18177973126f48cb828de7c24f138
-    imageID: ""
-    lastState: {}
-    name: build
-    ready: false
-    restartCount: 0
-    state:
-      waiting:
-        reason: PodInitializing
-  - image: harbor.markalston.net/kpack/heroku-builder@sha256:04a70d51b27825468347a19e992e000f80e18177973126f48cb828de7c24f138
-    imageID: ""
-    lastState: {}
-    name: export
-    ready: false
-    restartCount: 0
-    state:
-      waiting:
-        reason: PodInitializing
-  phase: Failed
-  podIP: 100.96.7.84
-  podIPs:
-  - ip: 100.96.7.84
-  qosClass: BestEffort
-  startTime: "2021-05-24T17:15:10Z"

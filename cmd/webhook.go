@@ -120,20 +120,23 @@ func mutationRequired(ignoredList []string, metadata *metav1.ObjectMeta) bool {
 	return required
 }
 
-func addContainer(target, added []corev1.Container, basePath string) (patch []patchOperation) {
+func addContainer(target, added []corev1.Container, basePath string) ([]patchOperation) {
 	first := len(target) == 0
 	var value []corev1.Container
+	var patch []patchOperation
 	for _, add := range added {
 		value = append(value, add)
 		path := basePath
+		op := "add"
 		if first {
 			first = false
 			value = []corev1.Container{add}
 		} else {
-			path = path + "/-"
+			//path = path + "/-"
+			op = "replace"
 		}
 		patch = append(patch, patchOperation{
-			Op:    "add",
+			Op:    op,
 			Path:  path,
 			Value: value,
 		})
@@ -272,6 +275,7 @@ func (svr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admission
 
 	initContainer := replaceInitContainerStrings(pod.Spec.SecurityContext, pod.Spec.Containers, pod.Spec.Volumes)
 	if initContainer == "" {
+		glog.Info("No pod containers have security context or volume mount that requires mutation")
 		initContainer = replaceInitContainerStrings(pod.Spec.SecurityContext, pod.Spec.InitContainers, pod.Spec.Volumes)
 		if initContainer == "" {
 			glog.Infof("Skipping mutation for %s/%s due to pod not containing a securityContext or volumes", pod.Namespace, pod.Name)
@@ -285,7 +289,7 @@ func (svr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admission
 	if err != nil {
 		glog.Errorf("Failed to load configuration: %v", err)
 	}
-	glog.Infof("initContainerConfig: %+v", *initContainerConfig)
+	glog.Infof("initContainer: %s", initContainer)
 	annotations := map[string]string{admissionWebhookAnnotationStatusKey: "injected"}
 	patchBytes, err := createPatch(&pod, initContainerConfig, annotations)
 	if err != nil {
