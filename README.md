@@ -74,7 +74,7 @@ volume-permissions-container-injector-webhook-deployment   1/1     1            
 kubectl -n volume-permissions-container-injector logs -l app=volume-permissions-container-injector --follow
 ```
 
-3. Create new namespace `injection` and label it with `volume-permissions-container-injector=enabled`
+3. Create new namespace `sentry-pro` and label it with `volume-permissions-container-injector=enabled`
 
 ```shell
 kubectl create ns sentry-pro
@@ -83,13 +83,13 @@ kubectl get namespace -L volume-permissions-container-injection
 
 NAME                                      STATUS   AGE   VOLUME-PERMISSIONS-CONTAINER-INJECTION
 default                                   Active   26m
-injection                                 Active   13s   enabled
+sentry-pro                                 Active   13s   enabled
 kube-public                               Active   26m
 kube-system                               Active   26m
 volume-permissions-container-injector     Active   17m
 ```
 
-4. Deploy an app in Kubernetes cluster, take `kotsadm-minio` statefulset as an example
+4. Deploy an app in Kubernetes cluster, take `sentry-redis` statefulset as an example
 
 ```shell
 kubectl apply -f examples/sentry-redis-sts.yaml -n sentry-pro
@@ -99,13 +99,13 @@ kubectl apply -f examples/sentry-redis-sts.yaml -n sentry-pro
 
 ```shell
 kubectl get pod
-NAME                     READY     STATUS        RESTARTS   AGE
-sentry-redis-0           1/1       Running       0          1m
+NAME                    READY   STATUS     RESTARTS   AGE
+sentry-redis-master-0   0/1     Init:0/1   0          12s
 ```
 
 ```shell
-kubectl -n injection get pod sentry-redis-0 -o jsonpath="{.spec.initContainers[*].name}"
-sentry-redis-0 volume-permissions
+kubectl -n sentry-pro get pod sentry-redis-master-0 -o jsonpath="{.spec.initContainers[*].name}"
+volume-permissions
 ```
 
 # Cleanup
