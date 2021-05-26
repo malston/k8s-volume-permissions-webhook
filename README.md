@@ -1,5 +1,15 @@
 # Kubernetes Mutating Webhook for Volume Permissions Init Container
 
+My homelab datastore is backed by NFS which means that a container with a mounted persistence volume will only be able
+to write to the backing datastore if it's running as root. The standard practice of deploying containers with non-root
+privileges will result in those containers only having read-only access to the volume. Unfortunately, setting the
+permissions on the mounted volume to the non-root user using `fsGroup` in a SecurityContext does not work. The
+[workaround](https://docs.bitnami.com/tutorials/work-with-non-root-containers/) is to deploy an init container that runs
+as the root user to modify the owner of the volume mount as the non-root user.
+
+This mutating webhook will chown the volume mount whenever a pod is created with a container or init-container that
+has a PodSecurityContext (or container SecurityContext) to the owner specified.
+
 ## Build
 
 1. Build binary
