@@ -5,7 +5,7 @@ to write to the backing datastore if it's running as root. The standard practice
 privileges will result in those containers only having read-only access to the volume. Unfortunately, setting the
 permissions on the mounted volume to the non-root user using `fsGroup` in a SecurityContext does not work. The
 [workaround](https://docs.bitnami.com/tutorials/work-with-non-root-containers/) is to deploy an init container that runs
-as the root user to modify the owner of the volume mount as the non-root user.
+as the root user to modify the owner of the volume mount to the non-root user.
 
 This mutating webhook will chown the volume mount whenever a pod is created with a container or init-container that
 has a PodSecurityContext (or container SecurityContext) to the owner specified.
